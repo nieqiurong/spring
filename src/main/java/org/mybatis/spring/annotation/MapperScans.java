@@ -35,6 +35,7 @@ import java.lang.annotation.Target;
  * @since 2.0.0
  * @see MapperScan
  */
+//由于jdk1.8之前无法标记重复注解，所以这里包了一层，现在基本上也用不这个了.
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented

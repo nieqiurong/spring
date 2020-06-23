@@ -91,32 +91,43 @@ import org.springframework.util.StringUtils;
 public class MapperScannerConfigurer
     implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware, BeanNameAware {
 
+  //包扫描路径
   private String basePackage;
 
   private boolean addToConfig = true;
 
+  //是否惰性初始化
   private String lazyInitialization;
 
   private SqlSessionFactory sqlSessionFactory;
 
   private SqlSessionTemplate sqlSessionTemplate;
 
+  //sqlSessionFactory引用Bean名称
   private String sqlSessionFactoryBeanName;
 
+  //sqlSessionTemplate引用Bean名称
   private String sqlSessionTemplateBeanName;
 
+  //扫描注解
   private Class<? extends Annotation> annotationClass;
 
+  //标记接口
   private Class<?> markerInterface;
 
+  //Mapper工厂代理bean
   private Class<? extends MapperFactoryBean> mapperFactoryBeanClass;
 
+  //Spring容器上下文
   private ApplicationContext applicationContext;
 
+  //Bean名称
   private String beanName;
 
+  //否执行属性占位符处理
   private boolean processPropertyPlaceHolders;
 
+  //Bean名称生成器
   private BeanNameGenerator nameGenerator;
 
   /**
@@ -335,6 +346,7 @@ public class MapperScannerConfigurer
   @Override
   public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) {
     if (this.processPropertyPlaceHolders) {
+      //解析占位符属性
       processPropertyPlaceHolders();
     }
 
@@ -347,6 +359,7 @@ public class MapperScannerConfigurer
     scanner.setSqlSessionFactoryBeanName(this.sqlSessionFactoryBeanName);
     scanner.setSqlSessionTemplateBeanName(this.sqlSessionTemplateBeanName);
     scanner.setResourceLoader(this.applicationContext);
+    //设置springBean名称生成器
     scanner.setBeanNameGenerator(this.nameGenerator);
     scanner.setMapperFactoryBeanClass(this.mapperFactoryBeanClass);
     if (StringUtils.hasText(lazyInitialization)) {
@@ -354,6 +367,7 @@ public class MapperScannerConfigurer
     }
     scanner.registerFilters();
     scanner.scan(
+        //将原拼接的包路径再按分隔符切割开来交由spring进行class扫描并注册bean
         StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
   }
 
@@ -364,6 +378,7 @@ public class MapperScannerConfigurer
    * definition. Then update the values.
    */
   private void processPropertyPlaceHolders() {
+    //获取spring容器里属性解析器集合
     Map<String, PropertyResourceConfigurer> prcs = applicationContext.getBeansOfType(PropertyResourceConfigurer.class,
         false, false);
 
@@ -374,20 +389,23 @@ public class MapperScannerConfigurer
       // PropertyResourceConfigurer does not expose any methods to explicitly perform
       // property placeholder substitution. Instead, create a BeanFactory that just
       // contains this mapper scanner and post process the factory.
+      //模拟spring环境处理占位符参数
       DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
       factory.registerBeanDefinition(beanName, mapperScannerBean);
 
       for (PropertyResourceConfigurer prc : prcs.values()) {
+        //将占位符解析成实际参数
         prc.postProcessBeanFactory(factory);
       }
 
       PropertyValues values = mapperScannerBean.getPropertyValues();
-
+      // 这里下面就是普通的赋值操作，下面的方法名取的有问题，实际上就是获取一个value值。
       this.basePackage = updatePropertyValue("basePackage", values);
       this.sqlSessionFactoryBeanName = updatePropertyValue("sqlSessionFactoryBeanName", values);
       this.sqlSessionTemplateBeanName = updatePropertyValue("sqlSessionTemplateBeanName", values);
       this.lazyInitialization = updatePropertyValue("lazyInitialization", values);
     }
+    //如果上面未配置的话，这里将获取容器里面的配置参数然后替换成实际值，比如@PropertySource标记加载的配置这种
     this.basePackage = Optional.ofNullable(this.basePackage).map(getEnvironment()::resolvePlaceholders).orElse(null);
     this.sqlSessionFactoryBeanName = Optional.ofNullable(this.sqlSessionFactoryBeanName)
         .map(getEnvironment()::resolvePlaceholders).orElse(null);
@@ -401,6 +419,13 @@ public class MapperScannerConfigurer
     return this.applicationContext.getEnvironment();
   }
 
+  /**
+   * 这方法应该叫getPropertyValue可能好理解点
+   *
+   * @param propertyName 属性key
+   * @param values       属性集合
+   * @return 属性值
+   */
   private String updatePropertyValue(String propertyName, PropertyValues values) {
     PropertyValue property = values.getPropertyValue(propertyName);
 

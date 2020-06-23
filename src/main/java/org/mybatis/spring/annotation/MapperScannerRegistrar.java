@@ -49,6 +49,7 @@ import org.springframework.util.StringUtils;
  * @see ClassPathMapperScanner
  * @since 1.2.0
  */
+// 实现的ResourceLoaderAware接口未使用，不用关心
 public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware {
 
   /**
@@ -63,10 +64,12 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
   }
 
   /**
+   * 实现动态mapper注册
    * {@inheritDoc}
    */
   @Override
   public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+    //获取目标配置类上标记的注解属性
     AnnotationAttributes mapperScanAttrs = AnnotationAttributes
         .fromMap(importingClassMetadata.getAnnotationAttributes(MapperScan.class.getName()));
     if (mapperScanAttrs != null) {
@@ -77,76 +80,90 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
 
   void registerBeanDefinitions(AnnotationMetadata annoMeta, AnnotationAttributes annoAttrs,
       BeanDefinitionRegistry registry, String beanName) {
-
+    // 创建一个MapperScannerConfigurer Bean实例
     BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(MapperScannerConfigurer.class);
+    //设置processPropertyPlaceHolders属性为true
     builder.addPropertyValue("processPropertyPlaceHolders", true);
-
+    //读取@MapperScan注解属性annotationClass (按注解查找)
     Class<? extends Annotation> annotationClass = annoAttrs.getClass("annotationClass");
     if (!Annotation.class.equals(annotationClass)) {
       builder.addPropertyValue("annotationClass", annotationClass);
     }
-
+    //读取@MapperScan注解属性markerInterface (按接口查找)
     Class<?> markerInterface = annoAttrs.getClass("markerInterface");
     if (!Class.class.equals(markerInterface)) {
       builder.addPropertyValue("markerInterface", markerInterface);
     }
-
+    //读取@MapperScan注解属性nameGenerator (bean名称生成器)
     Class<? extends BeanNameGenerator> generatorClass = annoAttrs.getClass("nameGenerator");
     if (!BeanNameGenerator.class.equals(generatorClass)) {
       builder.addPropertyValue("nameGenerator", BeanUtils.instantiateClass(generatorClass));
     }
-
+    //读取@MapperScan注解属性factoryBean (MapperFactoryBean)
     Class<? extends MapperFactoryBean> mapperFactoryBeanClass = annoAttrs.getClass("factoryBean");
     if (!MapperFactoryBean.class.equals(mapperFactoryBeanClass)) {
       builder.addPropertyValue("mapperFactoryBeanClass", mapperFactoryBeanClass);
     }
-
+    //读取@MapperScan注解属性sqlSessionTemplateRef (sqlSessionTemplate引用bean名称)
     String sqlSessionTemplateRef = annoAttrs.getString("sqlSessionTemplateRef");
     if (StringUtils.hasText(sqlSessionTemplateRef)) {
       builder.addPropertyValue("sqlSessionTemplateBeanName", annoAttrs.getString("sqlSessionTemplateRef"));
     }
-
+    //读取@MapperScan注解属性sqlSessionFactoryRef (sqlSessionFactory引用bean名称)
     String sqlSessionFactoryRef = annoAttrs.getString("sqlSessionFactoryRef");
     if (StringUtils.hasText(sqlSessionFactoryRef)) {
       builder.addPropertyValue("sqlSessionFactoryBeanName", annoAttrs.getString("sqlSessionFactoryRef"));
     }
 
     List<String> basePackages = new ArrayList<>();
+    //扫描包
     basePackages.addAll(
         Arrays.stream(annoAttrs.getStringArray("value")).filter(StringUtils::hasText).collect(Collectors.toList()));
-
+    //扫描包（数组配置）
     basePackages.addAll(Arrays.stream(annoAttrs.getStringArray("basePackages")).filter(StringUtils::hasText)
         .collect(Collectors.toList()));
-
+    //扫描包（数组类配置，将所在类的包解析出来添加进包扫描之中）
     basePackages.addAll(Arrays.stream(annoAttrs.getClassArray("basePackageClasses")).map(ClassUtils::getPackageName)
         .collect(Collectors.toList()));
 
     if (basePackages.isEmpty()) {
+      //当上面的value,basePackages，basePackageClasses为空时，采用当前元数据类所在包。
       basePackages.add(getDefaultBasePackage(annoMeta));
     }
-
+    //读取@MapperScan注解属性lazyInitialization(设置是否惰性初始化)
     String lazyInitialization = annoAttrs.getString("lazyInitialization");
     if (StringUtils.hasText(lazyInitialization)) {
       builder.addPropertyValue("lazyInitialization", lazyInitialization);
     }
-
+    //设置包扫描（加多个包配置用,连起来转成string）
     builder.addPropertyValue("basePackage", StringUtils.collectionToCommaDelimitedString(basePackages));
-
+    //往spring容器注册bean（顺带会设置beanName属性）
     registry.registerBeanDefinition(beanName, builder.getBeanDefinition());
 
   }
 
+  /**
+   * 生成bean名称
+   * @param importingClassMetadata 元数据信息
+   * @param index 下标
+   * @return 配置类全类名#MapperScannerRegistrar类名#下标
+   */
   private static String generateBaseBeanName(AnnotationMetadata importingClassMetadata, int index) {
     return importingClassMetadata.getClassName() + "#" + MapperScannerRegistrar.class.getSimpleName() + "#" + index;
   }
 
+  /**
+   * 获取类所在包名
+   * @param importingClassMetadata 元数据信息
+   * @return 包名
+   */
   private static String getDefaultBasePackage(AnnotationMetadata importingClassMetadata) {
     return ClassUtils.getPackageName(importingClassMetadata.getClassName());
   }
 
   /**
    * A {@link MapperScannerRegistrar} for {@link MapperScans}.
-   * 
+   *
    * @since 2.0.0
    */
   static class RepeatingRegistrar extends MapperScannerRegistrar {
@@ -155,6 +172,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
      */
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+      //处理MapperScans扫描,逻辑不复杂，得到配置的数组指，按单个mapperScan进行处理
       AnnotationAttributes mapperScansAttrs = AnnotationAttributes
           .fromMap(importingClassMetadata.getAnnotationAttributes(MapperScans.class.getName()));
       if (mapperScansAttrs != null) {

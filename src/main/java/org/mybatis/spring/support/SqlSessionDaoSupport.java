@@ -36,6 +36,7 @@ import org.springframework.dao.support.DaoSupport;
  * @see #setSqlSessionTemplate
  * @see SqlSessionTemplate
  */
+//这个类只是用来扩展spring的jdbc接口来提供操作数据库能力，基本上没人用，需要注入一个sqlSessionTemplate或sqlSessionFactory。
 public abstract class SqlSessionDaoSupport extends DaoSupport {
 
   private SqlSessionTemplate sqlSessionTemplate;

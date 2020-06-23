@@ -85,6 +85,7 @@ public @interface MapperScan {
    *
    * @return base package names
    */
+  //包扫描配置，等价于basePackages，只是能简化一下属性
   String[] value() default {};
 
   /**
@@ -93,6 +94,7 @@ public @interface MapperScan {
    *
    * @return base package names for scanning mapper interface
    */
+  //包扫描配置
   String[] basePackages() default {};
 
   /**
@@ -104,6 +106,7 @@ public @interface MapperScan {
    *
    * @return classes that indicate base package for scanning mapper interface
    */
+  //按类进行扫描（会讲当前类所在的包设置成basePackage）
   Class<?>[] basePackageClasses() default {};
 
   /**
@@ -111,6 +114,7 @@ public @interface MapperScan {
    *
    * @return the class of {@link BeanNameGenerator}
    */
+  //springBean名称生产器
   Class<? extends BeanNameGenerator> nameGenerator() default BeanNameGenerator.class;
 
   /**
@@ -122,6 +126,7 @@ public @interface MapperScan {
    *
    * @return the annotation that the scanner will search for
    */
+  //扫描注解（指定注解之后，会扫描包下所在类含有指定注解才会认为是mapper）
   Class<? extends Annotation> annotationClass() default Annotation.class;
 
   /**
@@ -134,6 +139,7 @@ public @interface MapperScan {
    *
    * @return the parent that the scanner will search for
    */
+  //扫描接口（指定接口之后，会扫描包下所在类含有指定注解才会认为是mapper）
   Class<?> markerInterface() default Class.class;
 
   /**
@@ -142,6 +148,7 @@ public @interface MapperScan {
    *
    * @return the bean name of {@code SqlSessionTemplate}
    */
+  //sqlSessionTemplate引用bean名称
   String sqlSessionTemplateRef() default "";
 
   /**
@@ -150,6 +157,7 @@ public @interface MapperScan {
    *
    * @return the bean name of {@code SqlSessionFactory}
    */
+  //sqlSessionFactory引用bean名称
   String sqlSessionFactoryRef() default "";
 
   /**
@@ -157,6 +165,7 @@ public @interface MapperScan {
    *
    * @return the class of {@code MapperFactoryBean}
    */
+  //自定义MapperFactoryBean配置
   Class<? extends MapperFactoryBean> factoryBean() default MapperFactoryBean.class;
 
   /**
@@ -169,6 +178,7 @@ public @interface MapperScan {
    * @return set {@code true} to enable lazy initialization
    * @since 2.0.2
    */
+  //惰性初始化，这里设置成string类型是为了支持表达式配置，比如lazyInitialization = "${mybatis.lazy-initialization:false}"
   String lazyInitialization() default "";
 
 }

@@ -51,12 +51,16 @@ import org.springframework.beans.factory.FactoryBean;
  *
  * @see SqlSessionTemplate
  */
+//这个就是mybatis整合spring的核心了，这里会set注入sqlSessionFactory和sqlSessionTemplate(如果没自己手动配置的话，这个就是空的)
 public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements FactoryBean<T> {
 
+  // mapper class
   private Class<T> mapperInterface;
 
+  //是否将mapper添加至Configuration
   private boolean addToConfig = true;
 
+  //空构造需要配合setMapperInterface一起使用
   public MapperFactoryBean() {
     // intentionally empty
   }
@@ -70,6 +74,7 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
    */
   @Override
   protected void checkDaoConfig() {
+    //检查一下sqlSessionTemplate是否为空
     super.checkDaoConfig();
 
     notNull(this.mapperInterface, "Property 'mapperInterface' is required");
@@ -77,6 +82,7 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
     Configuration configuration = getSqlSession().getConfiguration();
     if (this.addToConfig && !configuration.hasMapper(this.mapperInterface)) {
       try {
+        //加mapperClass添加至Configuration
         configuration.addMapper(this.mapperInterface);
       } catch (Exception e) {
         logger.error("Error while adding the mapper '" + this.mapperInterface + "' to configuration.", e);
@@ -92,6 +98,7 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
    */
   @Override
   public T getObject() throws Exception {
+    // 这里返回的就是mybatis的动态代理对象MapperProxy
     return getSqlSession().getMapper(this.mapperInterface);
   }
 
