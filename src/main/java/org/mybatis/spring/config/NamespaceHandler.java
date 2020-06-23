@@ -25,6 +25,7 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
  * @see MapperScannerBeanDefinitionParser
  * @since 1.2.0
  */
+//自定义XML标签解析，spring读取约定配置文件META-INF/spring.handlers  org.springframework.beans.factory.xml.DefaultNamespaceHandlerResolver
 public class NamespaceHandler extends NamespaceHandlerSupport {
 
   /**
@@ -32,6 +33,7 @@ public class NamespaceHandler extends NamespaceHandlerSupport {
    */
   @Override
   public void init() {
+    //解析scan节点 <mybatis:scan base-package="org.mybatis.spring.mapper" annotation="org.springframework.stereotype.Component"/>
     registerBeanDefinitionParser("scan", new MapperScannerBeanDefinitionParser());
   }
 

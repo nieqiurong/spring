@@ -42,7 +42,6 @@ import org.w3c.dom.Element;
  * @see ClassPathMapperScanner
  * @see MapperScannerConfigurer
  */
-
 public class MapperScannerBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
   private static final String ATTRIBUTE_BASE_PACKAGE = "base-package";
@@ -61,10 +60,11 @@ public class MapperScannerBeanDefinitionParser extends AbstractBeanDefinitionPar
    */
   @Override
   protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
+    //构建一个MapperScannerConfigurerBean
     BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(MapperScannerConfigurer.class);
 
     ClassLoader classLoader = ClassUtils.getDefaultClassLoader();
-
+    //下面这里就是读取<mybatis:scan>中配置的属性并赋值到MapperScannerConfigurerBean之中
     builder.addPropertyValue("processPropertyPlaceHolders", true);
     try {
       String annotationClassName = element.getAttribute(ATTRIBUTE_ANNOTATION);
@@ -106,9 +106,8 @@ public class MapperScannerBeanDefinitionParser extends AbstractBeanDefinitionPar
   }
 
   /**
-   * {@inheritDoc}
-   * 
-   * @since 2.0.2
+   * 节点没有id属性，需要重新生成id值 ,其实就是beanName
+   * @return 是否生成id值
    */
   @Override
   protected boolean shouldGenerateIdAsFallback() {
