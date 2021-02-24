@@ -57,6 +57,10 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClassPathMapperScanner.class);
 
+
+  // Copy of FactoryBean#OBJECT_TYPE_ATTRIBUTE which was added in Spring 5.2
+  static final String FACTORY_BEAN_OBJECT_TYPE = "factoryBeanObjectType";
+
   //是否将mapper添加至Configuration
   private boolean addToConfig = true;
 
@@ -259,6 +263,11 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
       definition.setBeanClass(this.mapperFactoryBeanClass);
       //设置是否调用org.apache.ibatis.session.Configuration.addMapper添加mapper
       definition.getPropertyValues().add("addToConfig", this.addToConfig);
+
+      // Attribute for MockitoPostProcessor
+      // https://github.com/mybatis/spring-boot-starter/issues/475
+      definition.setAttribute(FACTORY_BEAN_OBJECT_TYPE, beanClassName);
+
       //标志是否引用了其他factoryBean或者sqlSessionTemplate
       boolean explicitFactoryUsed = false;
       if (StringUtils.hasText(this.sqlSessionFactoryBeanName)) {

@@ -22,12 +22,12 @@
   <parent>
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
-    <version>32-SNAPSHOT</version>
+    <version>32</version>
     <relativePath />
   </parent>
 
   <artifactId>mybatis-spring</artifactId>
-  <version>2.0.6-SNAPSHOT</version>
+  <version>2.0.7-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>mybatis-spring</name>
@@ -105,12 +105,12 @@
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
 
-    <mybatis.version>3.5.5</mybatis.version>
-    <spring.version>5.2.7.RELEASE</spring.version>
-    <spring-batch.version>4.2.4.RELEASE</spring-batch.version>
+    <mybatis.version>3.5.6</mybatis.version>
+    <spring.version>5.3.4</spring.version>
+    <spring-batch.version>4.3.1</spring-batch.version>
     <module.name>org.mybatis.spring</module.name>
 
-    <junit.version>5.6.2</junit.version>
+    <junit.version>5.7.1</junit.version>
 
   </properties>
 
@@ -148,7 +148,7 @@
     <dependency>
       <groupId>com.atomikos</groupId>
       <artifactId>transactions-jdbc</artifactId>
-      <version>5.0.6</version>
+      <version>5.0.8</version>
       <scope>test</scope>
     </dependency>
 
@@ -169,7 +169,7 @@
     <dependency>
       <groupId>org.jboss.byteman</groupId>
       <artifactId>byteman-bmunit</artifactId>
-      <version>4.0.11</version>
+      <version>4.0.14</version>
       <scope>test</scope>
     </dependency>
 
@@ -210,7 +210,7 @@
     <dependency>
       <groupId>org.hsqldb</groupId>
       <artifactId>hsqldb</artifactId>
-      <version>2.5.0</version>
+      <version>2.5.1</version>
       <scope>test</scope>
     </dependency>
 
@@ -224,21 +224,21 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>3.3.3</version>
+      <version>3.7.7</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>3.16.1</version>
+      <version>3.19.0</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>com.mockrunner</groupId>
       <artifactId>mockrunner-core</artifactId>
-      <version>2.0.4</version>
+      <version>2.0.6</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -266,7 +266,7 @@
     <dependency>
       <groupId>com.mockrunner</groupId>
       <artifactId>mockrunner-ejb</artifactId>
-      <version>2.0.4</version>
+      <version>2.0.6</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -282,7 +282,7 @@
     <dependency>
       <groupId>com.mockrunner</groupId>
       <artifactId>mockrunner-jdbc</artifactId>
-      <version>2.0.4</version>
+      <version>2.0.6</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -301,7 +301,7 @@
     <dependency>
       <groupId>jakarta.servlet</groupId>
       <artifactId>jakarta.servlet-api</artifactId>
-      <version>4.0.3</version>
+      <version>4.0.4</version>
       <scope>test</scope>
     </dependency>
 
@@ -330,6 +330,8 @@
         <artifactId>maven-site-plugin</artifactId>
         <configuration>
           <locales>en,es,zh_CN,ja,ko</locales>
+          <!-- Build using files that replace a placeholder using project properties -->
+          <siteDirectory>${project.build.directory}/site-src</siteDirectory>
         </configuration>
       </plugin>
     </plugins>
@@ -345,6 +347,12 @@
       </resource>
       <resource>
         <directory>${project.basedir}/src/main/resources</directory>
+      </resource>
+      <!-- Copy for replacing a placeholder using project properties -->
+      <resource>
+        <directory>${project.basedir}/src/site</directory>
+        <targetPath>${project.build.directory}/site-src</targetPath>
+        <filtering>true</filtering>
       </resource>
     </resources>
     <testResources>
