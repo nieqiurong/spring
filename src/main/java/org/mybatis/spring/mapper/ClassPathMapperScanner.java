@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,29 @@
  */
 package org.mybatis.spring.mapper;
 
+import java.lang.annotation.Annotation;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.Set;
+
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.logging.Logger;
 import org.mybatis.logging.LoggerFactory;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.aop.scope.ScopedProxyFactoryBean;
+import org.springframework.aop.scope.ScopedProxyUtils;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.beans.factory.support.GenericBeanDefinition;
+import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.util.StringUtils;
-
-import java.lang.annotation.Annotation;
-import java.util.Arrays;
-import java.util.Set;
 
 /**
  * A {@link ClassPathBeanDefinitionScanner} that registers Mappers by {@code basePackage}, {@code annotationClass}, or
@@ -45,7 +49,7 @@ import java.util.Set;
  *
  * @author Hunter Presnall
  * @author Eduardo Macarron
- * 
+ *
  * @see MapperFactoryBean
  * @since 1.2.0
  */
@@ -79,6 +83,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
   //MapperFactoryBean
   private Class<? extends MapperFactoryBean> mapperFactoryBeanClass = MapperFactoryBean.class;
+
+  private String defaultScope;
 
   public ClassPathMapperScanner(BeanDefinitionRegistry registry) {
     super(registry, false);
@@ -143,6 +149,20 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
    */
   public void setMapperFactoryBeanClass(Class<? extends MapperFactoryBean> mapperFactoryBeanClass) {
     this.mapperFactoryBeanClass = mapperFactoryBeanClass == null ? MapperFactoryBean.class : mapperFactoryBeanClass;
+  }
+
+  /**
+   * Set the default scope of scanned mappers.
+   * <p>
+   * Default is {@code null} (equiv to singleton).
+   * </p>
+   *
+   * @param defaultScope
+   *          the scope
+   * @since 2.0.6
+   */
+  public void setDefaultScope(String defaultScope) {
+    this.defaultScope = defaultScope;
   }
 
   /**
@@ -215,9 +235,18 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
    * @param beanDefinitions bean元数据集合
    */
   private void processBeanDefinitions(Set<BeanDefinitionHolder> beanDefinitions) {
-    GenericBeanDefinition definition;
+    AbstractBeanDefinition definition;
+    BeanDefinitionRegistry registry = getRegistry();
     for (BeanDefinitionHolder holder : beanDefinitions) {
-      definition = (GenericBeanDefinition) holder.getBeanDefinition();
+      definition = (AbstractBeanDefinition) holder.getBeanDefinition();
+      boolean scopedProxy = false;
+      if (ScopedProxyFactoryBean.class.getName().equals(definition.getBeanClassName())) {
+        definition = (AbstractBeanDefinition) Optional
+            .ofNullable(((RootBeanDefinition) definition).getDecoratedDefinition())
+            .map(BeanDefinitionHolder::getBeanDefinition).orElseThrow(() -> new IllegalStateException(
+                "The target bean definition of scoped proxy bean not found. Root bean definition[" + holder + "]"));
+        scopedProxy = true;
+      }
       String beanClassName = definition.getBeanClassName();
       LOGGER.debug(() -> "Creating MapperFactoryBean with name '" + holder.getBeanName() + "' and '" + beanClassName
           + "' mapperInterface");
@@ -269,6 +298,23 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
       }
       //设置是否惰性初始化
       definition.setLazyInit(lazyInitialization);
+
+      if (scopedProxy) {
+        continue;
+      }
+
+      if (ConfigurableBeanFactory.SCOPE_SINGLETON.equals(definition.getScope()) && defaultScope != null) {
+        definition.setScope(defaultScope);
+      }
+
+      if (!definition.isSingleton()) {
+        BeanDefinitionHolder proxyHolder = ScopedProxyUtils.createScopedProxy(holder, registry, true);
+        if (registry.containsBeanDefinition(proxyHolder.getBeanName())) {
+          registry.removeBeanDefinition(proxyHolder.getBeanName());
+        }
+        registry.registerBeanDefinition(proxyHolder.getBeanName(), proxyHolder.getBeanDefinition());
+      }
+
     }
   }
 

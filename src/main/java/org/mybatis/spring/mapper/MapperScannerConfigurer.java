@@ -130,6 +130,8 @@ public class MapperScannerConfigurer
   //Bean名称生成器
   private BeanNameGenerator nameGenerator;
 
+  private String defaultScope;
+
   /**
    * This property lets you set the base package for your mapper interface files.
    * <p>
@@ -323,6 +325,20 @@ public class MapperScannerConfigurer
   }
 
   /**
+   * Sets the default scope of scanned mappers.
+   * <p>
+   * Default is {@code null} (equiv to singleton).
+   * </p>
+   *
+   * @param defaultScope
+   *          the default scope
+   * @since 2.0.6
+   */
+  public void setDefaultScope(String defaultScope) {
+    this.defaultScope = defaultScope;
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override
@@ -365,6 +381,9 @@ public class MapperScannerConfigurer
     if (StringUtils.hasText(lazyInitialization)) {
       scanner.setLazyInitialization(Boolean.valueOf(lazyInitialization));
     }
+    if (StringUtils.hasText(defaultScope)) {
+      scanner.setDefaultScope(defaultScope);
+    }
     scanner.registerFilters();
     scanner.scan(
         //将原拼接的包路径再按分隔符切割开来交由spring进行class扫描并注册bean
@@ -399,11 +418,11 @@ public class MapperScannerConfigurer
       }
 
       PropertyValues values = mapperScannerBean.getPropertyValues();
-      // 这里下面就是普通的赋值操作，下面的方法名取的有问题，实际上就是获取一个value值。
-      this.basePackage = updatePropertyValue("basePackage", values);
-      this.sqlSessionFactoryBeanName = updatePropertyValue("sqlSessionFactoryBeanName", values);
-      this.sqlSessionTemplateBeanName = updatePropertyValue("sqlSessionTemplateBeanName", values);
-      this.lazyInitialization = updatePropertyValue("lazyInitialization", values);
+      this.basePackage = getPropertyValue("basePackage", values);
+      this.sqlSessionFactoryBeanName = getPropertyValue("sqlSessionFactoryBeanName", values);
+      this.sqlSessionTemplateBeanName = getPropertyValue("sqlSessionTemplateBeanName", values);
+      this.lazyInitialization = getPropertyValue("lazyInitialization", values);
+      this.defaultScope = getPropertyValue("defaultScope", values);
     }
     //如果上面未配置的话，这里将获取容器里面的配置参数然后替换成实际值，比如@PropertySource标记加载的配置这种
     this.basePackage = Optional.ofNullable(this.basePackage).map(getEnvironment()::resolvePlaceholders).orElse(null);
@@ -413,12 +432,12 @@ public class MapperScannerConfigurer
         .map(getEnvironment()::resolvePlaceholders).orElse(null);
     this.lazyInitialization = Optional.ofNullable(this.lazyInitialization).map(getEnvironment()::resolvePlaceholders)
         .orElse(null);
+    this.defaultScope = Optional.ofNullable(this.defaultScope).map(getEnvironment()::resolvePlaceholders).orElse(null);
   }
 
   private Environment getEnvironment() {
     return this.applicationContext.getEnvironment();
   }
-
   /**
    * 这方法应该叫getPropertyValue可能好理解点
    *
@@ -426,7 +445,7 @@ public class MapperScannerConfigurer
    * @param values       属性集合
    * @return 属性值
    */
-  private String updatePropertyValue(String propertyName, PropertyValues values) {
+  private String getPropertyValue(String propertyName, PropertyValues values) {
     PropertyValue property = values.getPropertyValue(propertyName);
 
     if (property == null) {

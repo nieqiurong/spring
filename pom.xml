@@ -22,12 +22,12 @@
   <parent>
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
-    <version>31</version>
+    <version>32-SNAPSHOT</version>
     <relativePath />
   </parent>
 
   <artifactId>mybatis-spring</artifactId>
-  <version>2.0.5</version>
+  <version>2.0.6-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>mybatis-spring</name>
@@ -80,7 +80,7 @@
     <url>http://github.com/mybatis/spring</url>
     <connection>scm:git:ssh://github.com/mybatis/spring.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/mybatis/spring.git</developerConnection>
-    <tag>mybatis-spring-2.0.5</tag>
+    <tag>HEAD</tag>
   </scm>
   <issueManagement>
     <system>GitHub Issue Management</system>
@@ -106,14 +106,12 @@
     <osgi.dynamicImport>*</osgi.dynamicImport>
 
     <mybatis.version>3.5.5</mybatis.version>
-    <spring.version>5.2.6.RELEASE</spring.version>
-    <spring-batch.version>4.2.2.RELEASE</spring-batch.version>
+    <spring.version>5.2.7.RELEASE</spring.version>
+    <spring-batch.version>4.2.4.RELEASE</spring-batch.version>
     <module.name>org.mybatis.spring</module.name>
 
     <junit.version>5.6.2</junit.version>
 
-    <!-- Remove after parent 32 (support for jdk 13) -->
-    <jacoco.version>0.8.4</jacoco.version>
   </properties>
 
   <dependencies>
@@ -358,5 +356,13 @@
       </testResource>
     </testResources>
   </build>
+
+  <repositories>
+    <repository>
+      <id>sonatype-oss-snapshots</id>
+      <name>Sonatype OSS Snapshots Repository</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </repository>
+  </repositories>
 
 </project>
