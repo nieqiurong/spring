@@ -308,16 +308,18 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
       //设置是否惰性初始化
       definition.setLazyInit(lazyInitialization);
 
+      //如果本身已经是代理的bean了,则跳过后面创建代理bean的逻辑
       if (scopedProxy) {
         continue;
       }
-
+      //默认的是singleton,如果是字符串空的话,就代表手动指定过scope,所有这里不适合用definition.isSingleton()来判断
       if (ConfigurableBeanFactory.SCOPE_SINGLETON.equals(definition.getScope()) && defaultScope != null) {
         definition.setScope(defaultScope);
       }
-
+      // 非单例bean的情况下,创建代理bean.
       if (!definition.isSingleton()) {
         BeanDefinitionHolder proxyHolder = ScopedProxyUtils.createScopedProxy(holder, registry, true);
+        //如果存在前面的bean为非代理bean,则移除掉前面的然后再注册同名的代理bean,因为scan在前面执行,等同于替换一次.
         if (registry.containsBeanDefinition(proxyHolder.getBeanName())) {
           registry.removeBeanDefinition(proxyHolder.getBeanName());
         }
